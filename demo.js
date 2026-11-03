@@ -6,18 +6,19 @@
  * recargar vuelve al inicio.
  */
 (() => {
+  const SNAP = window.__SNAPSHOT__ || null;   // foto del tablero real: se pone con scripts/build-demo.mjs --real
   const hoy = new Date();
   const dia = n => { const x = new Date(hoy); x.setDate(x.getDate() + n); return x.toLocaleDateString('en-CA'); };
   const iso = (n, h = 10) => { const x = new Date(hoy); x.setDate(x.getDate() + n); x.setHours(h, 0, 0, 0); return x.toISOString(); };
 
   /* ---------- personas ---------- */
-  const people = { 'demo-ana': 'Ana Torres (demo)', 'demo-bruno': 'Bruno Salas (demo)', 'demo-carla': 'Carla Vega (demo)' };
+  const people = SNAP ? SNAP.people : { 'demo-ana': 'Ana Torres (demo)', 'demo-bruno': 'Bruno Salas (demo)', 'demo-carla': 'Carla Vega (demo)' };
   const YO = 'demo-ana';
-  const me = { user: { login: YO, name: people[YO], avatar: '', admin: false, github: YO, argus: { username: 'ana@ejemplo.test', nombre: people[YO] } }, deviceFlow: false, org: 'Goberna-Lab' };
+  const me = SNAP ? { user: null, deviceFlow: false, org: 'Goberna-Lab' } : { user: { login: YO, name: people[YO], avatar: '', admin: false, github: YO, argus: { username: 'ana@ejemplo.test', nombre: people[YO] } }, deviceFlow: false, org: 'Goberna-Lab' };
 
   /* ---------- proyectos y su historial ---------- */
   let n = 0; const uid = () => 'demo' + (++n).toString(36) + Math.random().toString(36).slice(2, 5);
-  const proyectos = [
+  const proyectos = SNAP ? SNAP.projects.map(p => ({ ...p, tasks: (p.tasks || []).filter(t => !t.hidden) })) : [
     { name: 'Portal de clientes', description: 'Autoservicio para que los clientes consulten y descarguen sus documentos.', owner: 'Ana Torres (demo)', ghUser: '', repo: 'portal-clientes', start: dia(-45), end: dia(15), progress: 72, status: 'en-curso', createdBy: YO },
     { name: 'Migración a la nube', description: 'Mover los servicios internos a la nueva infraestructura.', owner: 'Bruno Salas (demo)', ghUser: '', repo: 'migracion-nube', start: dia(-60), end: dia(4), progress: 35, status: 'en-riesgo', createdBy: 'demo-bruno' },
     { name: 'App móvil de campo', description: 'Registro de visitas desde el teléfono, también sin conexión.', owner: 'Carla Vega (demo)', ghUser: '', repo: '', start: dia(6), end: dia(70), progress: 5, status: 'planificado', createdBy: 'demo-carla' },
@@ -31,7 +32,7 @@
     ['Rediseño de la tabla de documentos', 'Función'], ['Ajuste de permisos por tipo de cliente', 'Corrección'], ['Mejora de rendimiento en la lista', 'Rendimiento'],
     ['Aviso por correo cuando hay un documento nuevo', 'Función'], ['Actualización de dependencias', 'Mantenimiento'], ['Búsqueda por nombre y fecha', 'Función'], ['Corrige el orden de las fechas', 'Corrección'],
   ];
-  proyectos.forEach((p, pi) => {
+  if (!SNAP) proyectos.forEach((p, pi) => {
     if (!p.repo) return;
     const k = pi === 0 ? 12 : pi === 1 ? 6 : 5;
     for (let i = 0; i < k; i++) {
@@ -46,7 +47,7 @@
   const vista = p => { const { tasks, ...r } = p; const ok = tasks.filter(t => !t.hidden); return { ...r, nTasks: ok.length, nDone: ok.filter(t => t.state === 'merged' || t.kind === 'commit').length }; };
 
   /* ---------- repositorios de ejemplo ---------- */
-  const repos = [['portal-clientes', 'Portal de autoservicio para clientes', -120], ['migracion-nube', 'Scripts y guías de la migración', -150], ['panel-metricas', 'Tablero semanal de indicadores', -200], ['app-campo', 'App móvil de visitas', -20],
+  const repos = SNAP ? [] : [['portal-clientes', 'Portal de autoservicio para clientes', -120], ['migracion-nube', 'Scripts y guías de la migración', -150], ['panel-metricas', 'Tablero semanal de indicadores', -200], ['app-campo', 'App móvil de visitas', -20],
     ['sitio-web', 'Sitio institucional', -400], ['automatizaciones', 'Tareas programadas del equipo', -300], ['documentacion', 'Manuales y guías internas', -500], ['pruebas-carga', 'Pruebas de carga y rendimiento', -90]]
     .map(([name, description, c], i) => ({ name, private: i % 2 === 0, description, pushed: iso(-i), created: iso(c) }));
 
@@ -90,6 +91,7 @@
     const u = new URL(String(url), location.href);
     if (!u.pathname.includes('/api/') || u.origin !== location.origin) return real(url, opt);
     const ruta = u.pathname.slice(u.pathname.indexOf('/api/')), m = (opt.method || 'GET').toUpperCase();
+    if (SNAP && m !== 'GET') return resp({ error: 'Esta es una vista pública de solo lectura: los cambios se hacen en el tablero interno.' }, 401);
     let b = {}; try { b = opt.body ? JSON.parse(opt.body) : {}; } catch { /* sin cuerpo */ }
     let x;
     if (ruta === '/api/projects' && m === 'GET') return resp(proyectos.map(vista));
@@ -134,7 +136,8 @@
     const c = document.createElement('div');
     c.setAttribute('role', 'note');
     c.style.cssText = 'position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:60;padding:8px 16px;border-radius:99px;font:600 .8125rem system-ui,sans-serif;color:#fff;background:rgba(10,20,50,.72);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.3);box-shadow:0 8px 30px rgba(0,0,0,.3);max-width:calc(100vw - 24px);text-align:center';
-    c.textContent = 'Demostración con datos de ejemplo · lo que cambies no se guarda';
+    c.textContent = SNAP ? 'Vista pública de solo lectura · datos al ' + new Date(SNAP.generado).toLocaleDateString('es-PE', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Demostración con datos de ejemplo · lo que cambies no se guarda';
+    if (SNAP) { const st = document.createElement('style'); st.textContent = '#me,#btnNew,#btnNew2,#exp,#argusMini,[onclick="openForm()"]{display:none!important}'; document.head.appendChild(st); }
     document.body.appendChild(c);
   });
   document.addEventListener('click', e => {

@@ -1,11 +1,10 @@
-# Avances TI · Demostración
+# Avances TI · Vista pública
 
-Demostración interactiva del tablero de avances de TI de Goberna, con **datos de ejemplo inventados**.
+Vista pública, **de solo lectura**, del tablero de avances de TI de Goberna: proyectos, cronograma, avance y el historial de trabajo
+de cada uno (PRs y commits).
 
-- No hay servidor: todo corre en tu navegador y **lo que cambies no se guarda** (al recargar vuelve al inicio).
-- No se conecta con GitHub ni con Argus, y no envía nada a ningún lado.
-- Prueba: el cronograma, el historial de un proyecto (⌘/clic en «Historial»), «Mis tareas en Argus» (desde tu cuenta, arriba a la derecha),
-  crear o editar un proyecto y el modo «Presentar».
-- Lo que no se puede mostrar sin servidor: conectar cuentas de verdad y la exportación a Excel.
+- Es una **foto fija** de los datos del tablero interno; **no se actualiza sola**. La fecha de la foto aparece en la cinta de abajo.
+- No hay servidor: no se puede crear, editar ni conectar cuentas desde aquí. Esos cambios se hacen en el tablero interno.
+- No incluye nada de Argus, ni sesiones, ni datos de acceso.
 
-Los datos reales y el código del tablero no están en este repositorio.
+El código del tablero no está en este repositorio.
